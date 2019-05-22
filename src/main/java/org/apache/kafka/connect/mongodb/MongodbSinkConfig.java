@@ -2,8 +2,8 @@ package org.apache.kafka.connect.mongodb;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
-import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.ConfigDef.Importance;
+import org.apache.kafka.common.config.ConfigDef.Type;
 
 import java.util.Map;
 
@@ -27,7 +27,7 @@ public class MongodbSinkConfig extends AbstractConfig {
     private static final String COLLECTIONS_DOC = "Collections of mongodb";
 
     public static ConfigDef config = new ConfigDef()
-    		.define(URI, Type.STRING, Importance.HIGH, URI_DOC)
+            .define(URI, Type.STRING, Importance.HIGH, URI_DOC)
             .define(HOST, Type.STRING, Importance.HIGH, HOST_DOC)
             .define(PORT, Type.INT, Importance.HIGH, PORT_DOC)
             .define(BULK_SIZE, Type.INT, Importance.HIGH, BULK_SIZE_DOC)

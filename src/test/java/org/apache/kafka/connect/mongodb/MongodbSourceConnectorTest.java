@@ -24,9 +24,9 @@ public class MongodbSourceConnectorTest {
         context = PowerMock.createMock(ConnectorContext.class);
         connector.initialize(context);
     }
-    
-    private Map<String, String> buildSourcePropertiesWithHostAndPort(){
-    	final Map<String, String> sourceProperties = new HashMap<>();
+
+    private Map<String, String> buildSourcePropertiesWithHostAndPort() {
+        final Map<String, String> sourceProperties = new HashMap<>();
         sourceProperties.put("host", "localhost");
         sourceProperties.put("port", Integer.toString(12345));
         sourceProperties.put("batch.size", Integer.toString(100));
@@ -35,9 +35,9 @@ public class MongodbSourceConnectorTest {
         sourceProperties.put("databases", "mydb.test1,mydb.test2,mydb.test3");
         return sourceProperties;
     }
-    
-    private Map<String, String> buildSourcePropertiesWithURI(){
-    	final Map<String, String> sourceProperties = new HashMap<>();
+
+    private Map<String, String> buildSourcePropertiesWithURI() {
+        final Map<String, String> sourceProperties = new HashMap<>();
         sourceProperties.put("uri", "mongodb://localhost:12345");
         sourceProperties.put("batch.size", Integer.toString(100));
         sourceProperties.put("schema.name", "schema");
@@ -60,7 +60,7 @@ public class MongodbSourceConnectorTest {
         Assert.assertEquals("mydb.test1,mydb.test2,mydb.test3", taskConfigs.get(0).get("databases"));
         PowerMock.verifyAll();
     }
-    
+
     @Test
     public void testSourceTasksUri() {
         PowerMock.replayAll();

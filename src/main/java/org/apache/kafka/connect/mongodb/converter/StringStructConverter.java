@@ -7,13 +7,13 @@ import org.bson.Document;
 
 /**
  * Default struct converter. This converter store mongodb document with .toString().
- * 
+ *
  * @author André Ignacio
  */
 public class StringStructConverter implements StructConverter {
 
-	@Override
-	public Struct toStruct(Document document, Schema schema) {
+    @Override
+    public Struct toStruct(Document document, Schema schema) {
         Struct messageStruct = new Struct(schema);
         BsonTimestamp bsonTimestamp = (BsonTimestamp) document.get("ts");
         Integer seconds = bsonTimestamp.getTime();
@@ -23,8 +23,8 @@ public class StringStructConverter implements StructConverter {
         messageStruct.put("operation", document.get("op"));
         messageStruct.put("database", document.get("ns"));
         messageStruct.put("object", document.get("o").toString());
-        
+
         return messageStruct;
-	}
+    }
 
 }

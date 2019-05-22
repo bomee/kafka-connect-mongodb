@@ -123,9 +123,9 @@ public class MongodbSourceTaskTest extends TestCase {
             List<SourceRecord> pollRecords;
             do {
                 pollRecords = task.poll();
-                for(SourceRecord r : pollRecords) {
+                for (SourceRecord r : pollRecords) {
                     records.add(r);
-                    offsets.putAll((Map<String, Long>)r.sourceOffset());
+                    offsets.putAll((Map<String, Long>) r.sourceOffset());
                 }
             } while (!pollRecords.isEmpty());
             totalWrittenDocuments += records.size();
@@ -159,9 +159,9 @@ public class MongodbSourceTaskTest extends TestCase {
             List<SourceRecord> pollRecords;
             do {
                 pollRecords = task.poll();
-                for(SourceRecord r : pollRecords) {
+                for (SourceRecord r : pollRecords) {
                     records.add(r);
-                    offsets.putAll((Map<String, Long>)r.sourceOffset());
+                    offsets.putAll((Map<String, Long>) r.sourceOffset());
                 }
             } while (!pollRecords.isEmpty());
             totalWrittenDocuments += records.size();

@@ -13,14 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static org.apache.kafka.connect.mongodb.MongodbSourceConfig.PORT;
-import static org.apache.kafka.connect.mongodb.MongodbSourceConfig.HOST;
-import static org.apache.kafka.connect.mongodb.MongodbSourceConfig.URI;
-import static org.apache.kafka.connect.mongodb.MongodbSourceConfig.SCHEMA_NAME;
-import static org.apache.kafka.connect.mongodb.MongodbSourceConfig.BATCH_SIZE;
-import static org.apache.kafka.connect.mongodb.MongodbSourceConfig.TOPIC_PREFIX;
-import static org.apache.kafka.connect.mongodb.MongodbSourceConfig.CONVERTER_CLASS;
-import static org.apache.kafka.connect.mongodb.MongodbSourceConfig.DATABASES;
+import static org.apache.kafka.connect.mongodb.MongodbSourceConfig.*;
 
 /**
  * MongodbSourceConnector implements the connector interface
@@ -29,7 +22,7 @@ import static org.apache.kafka.connect.mongodb.MongodbSourceConfig.DATABASES;
  * @author Andrea Patelli
  */
 public class MongodbSourceConnector extends SourceConnector {
-    private final static Logger log = LoggerFactory.getLogger(MongodbSourceConnector.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MongodbSourceConnector.class);
 
     private String uri;
     private String port;
@@ -58,35 +51,37 @@ public class MongodbSourceConnector extends SourceConnector {
      */
     @Override
     public void start(Map<String, String> map) {
-        log.trace("Parsing configuration");
+        LOGGER.trace("Parsing configuration");
 
         uri = map.get(URI);
-        if (uri == null || uri.isEmpty()){
+        if (uri == null || uri.isEmpty()) {
             host = map.get(HOST);
-            if (host == null || host.isEmpty()){
-            	throw new ConnectException("Missing " + HOST + "or " + URI +  " config");
+            if (host == null || host.isEmpty()) {
+                throw new ConnectException("Missing " + HOST + "or " + URI + " config");
             }
-        	
-        	port = map.get(PORT);
-            if (port == null || port.isEmpty()){
-                throw new ConnectException("Missing " + PORT + "or " + URI +  " config");
+
+            port = map.get(PORT);
+            if (port == null || port.isEmpty()) {
+                throw new ConnectException("Missing " + PORT + "or " + URI + " config");
             }
-        }        
+        }
         schemaName = map.get(SCHEMA_NAME);
-        if (schemaName == null || schemaName.isEmpty())
+        if (schemaName == null || schemaName.isEmpty()) {
             throw new ConnectException("Missing " + SCHEMA_NAME + " config");
+        }
 
         batchSize = map.get(BATCH_SIZE);
-        if (batchSize == null || batchSize.isEmpty())
+        if (batchSize == null || batchSize.isEmpty()) {
             throw new ConnectException("Missing " + BATCH_SIZE + " config");
+        }
 
         databases = map.get(DATABASES);
 
         topicPrefix = map.get(TOPIC_PREFIX);
-        
+
         converterClass = map.get(CONVERTER_CLASS);
 
-        LogUtils.dumpConfiguration(map, log);
+        LogUtils.dumpConfiguration(map, LOGGER);
     }
 
     /**
@@ -114,11 +109,11 @@ public class MongodbSourceConnector extends SourceConnector {
         for (int i = 0; i < numGroups; i++) {
             Map<String, String> config = new HashMap<>();
             config.put(URI, uri);
-            if(host!=null){
-            	config.put(HOST, host);
+            if (host != null) {
+                config.put(HOST, host);
             }
-            if(port!=null){
-            	config.put(PORT, port);
+            if (port != null) {
+                config.put(PORT, port);
             }
             config.put(SCHEMA_NAME, schemaName);
             config.put(BATCH_SIZE, batchSize);
@@ -138,7 +133,7 @@ public class MongodbSourceConnector extends SourceConnector {
     }
 
     @Override
-    public ConfigDef config () {
+    public ConfigDef config() {
         return MongodbSourceConfig.config;
     }
 

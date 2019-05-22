@@ -2,9 +2,9 @@ package org.apache.kafka.connect.mongodb;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.connect.mongodb.converter.StringStructConverter;
-import org.apache.kafka.common.config.ConfigDef.Importance;
 
 import java.util.Map;
 
