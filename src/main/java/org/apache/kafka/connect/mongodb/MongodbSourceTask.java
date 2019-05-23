@@ -2,10 +2,9 @@ package org.apache.kafka.connect.mongodb;
 
 import org.apache.kafka.common.errors.InterruptException;
 import org.apache.kafka.connect.data.Schema;
-import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
-import org.apache.kafka.connect.mongodb.converter.StringStructConverter;
+import org.apache.kafka.connect.mongodb.converter.JsonStructConverter;
 import org.apache.kafka.connect.mongodb.converter.StructConverter;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -74,7 +73,7 @@ public class MongodbSourceTask extends SourceTask {
         try {
             String structConverterClass = map.get(MongodbSourceConfig.CONVERTER_CLASS);
             if (structConverterClass == null || structConverterClass.isEmpty()) {
-                structConverterClass = StringStructConverter.class.getName();
+                structConverterClass = JsonStructConverter.class.getName();
             }
             structConverter = (StructConverter) Class.forName(structConverterClass).newInstance();
         } catch (Exception e) {
@@ -92,16 +91,7 @@ public class MongodbSourceTask extends SourceTask {
         for (String db : databases) {
             db = db.replaceAll("[\\s.]", "_");
             if (schemas.get(db) == null) {
-                schemas.put(db,
-                        SchemaBuilder
-                                .struct()
-                                .name(schemaName.concat("_").concat(db))
-                                .field("timestamp", Schema.OPTIONAL_INT32_SCHEMA)
-                                .field("order", Schema.OPTIONAL_INT32_SCHEMA)
-                                .field("operation", Schema.OPTIONAL_STRING_SCHEMA)
-                                .field("database", Schema.OPTIONAL_STRING_SCHEMA)
-                                .field("object", Schema.OPTIONAL_STRING_SCHEMA)
-                                .build());
+                schemas.put(db, structConverter.createSchema(schemaName.concat("_").concat(db)));
             }
         }
 
@@ -128,7 +118,7 @@ public class MongodbSourceTask extends SourceTask {
             Document message = reader.pool();
             Struct messageStruct = getStruct(message);
             String topic = getTopic(message);
-            String db = getDB(message);
+            String db = getNamespace(message);
             String timestamp = getTimestamp(message);
             records.add(new SourceRecord(
                     Collections.singletonMap("mongodb", db),
@@ -177,7 +167,7 @@ public class MongodbSourceTask extends SourceTask {
      * @param message from which retrieve the database
      * @return the database name, as a String
      */
-    private String getDB(Document message) {
+    private String getNamespace(Document message) {
         return (String) message.get("ns");
     }
 
@@ -203,7 +193,7 @@ public class MongodbSourceTask extends SourceTask {
      * @return message formatted as a Struct
      */
     private Struct getStruct(Document message) {
-        final Schema schema = schemas.get(getDB(message).replaceAll("[\\s.]", "_"));
+        final Schema schema = schemas.get(getNamespace(message).replaceAll("\\.\\w+", ""));
         return structConverter.toStruct(message, schema);
     }
 

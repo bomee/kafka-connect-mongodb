@@ -12,4 +12,6 @@ import org.bson.Document;
 public interface StructConverter {
 
     Struct toStruct(Document document, Schema schema);
+
+    Schema createSchema(String name);
 }

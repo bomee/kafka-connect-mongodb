@@ -97,14 +97,13 @@ public class DatabaseReader implements Runnable {
     }
 
     private FindIterable<Document> find(int page) {
-        final FindIterable<Document> documents = oplog
+        return oplog
                 .find(query)
                 .sort(new Document("$natural", 1))
                 .skip(page * batchSize)
                 .limit(batchSize)
-                .projection(Projections.include("ts", "op", "ns", "o"))
+                .projection(Projections.include("ts", "op", "ns", "o", "o2"))
                 .cursorType(CursorType.TailableAwait);
-        return documents;
     }
 
     @Override
@@ -169,7 +168,7 @@ public class DatabaseReader implements Runnable {
                         Filters.eq("op", "u"),
                         Filters.eq("op", "d")
                 ),
-                Filters.eq("ns", db)
+                Filters.regex("ns", db + "\\.")
         );
     }
 }
