@@ -2,9 +2,9 @@ package org.apache.kafka.connect.mongodb;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
-import org.apache.kafka.common.config.ConfigDef.Type;
-import org.apache.kafka.connect.mongodb.converter.StringStructConverter;
 import org.apache.kafka.common.config.ConfigDef.Importance;
+import org.apache.kafka.common.config.ConfigDef.Type;
+import org.apache.kafka.connect.mongodb.converter.JsonStructConverter;
 
 import java.util.Map;
 
@@ -36,7 +36,7 @@ public class MongodbSourceConfig extends AbstractConfig {
             .define(BATCH_SIZE, Type.INT, Importance.HIGH, BATCH_SIZE_DOC)
             .define(SCHEMA_NAME, Type.STRING, Importance.HIGH, SCHEMA_NAME_DOC)
             .define(TOPIC_PREFIX, Type.STRING, Importance.LOW, TOPIC_PREFIX_DOC)
-            .define(CONVERTER_CLASS, Type.STRING, StringStructConverter.class.getName(), Importance.LOW, CONVERTER_CLASS_DOC)
+            .define(CONVERTER_CLASS, Type.STRING, JsonStructConverter.class.getName(), Importance.LOW, CONVERTER_CLASS_DOC)
             .define(DATABASES, Type.STRING, Importance.LOW, DATABASES_DOC);
 
     public MongodbSourceConfig(Map<String, String> props) {

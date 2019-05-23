@@ -34,9 +34,9 @@ public class MongodbReader {
         this.start = start;
         this.messages = new ConcurrentLinkedQueue<>();
     }
-    
+
     public MongodbReader(String host, Integer port, List<String> dbs, Integer batchSize, Map<Map<String, String>, Map<String, Object>> start) {
-    	this.uri = null;
+        this.uri = null;
         this.host = host;
         this.port = port;
         this.batchSize = batchSize;
@@ -47,53 +47,51 @@ public class MongodbReader {
         this.messages = new ConcurrentLinkedQueue<>();
     }
 
-	public void run() {
+    public void run() {
         // for every database to watch
-        for (String db : dbs) {            
-            final String start = getStartOffset(db);
-            
+        for (String db : dbs) {
+            final String startOffset = getStartOffset(db);
+
             DatabaseReader reader;
-            if(uri != null){
-            	reader = new DatabaseReader(uri, db, start, batchSize, messages);
-            }
-            else{
-            	reader = new DatabaseReader(host, port, db, start, batchSize, messages);
+            if (uri != null) {
+                reader = new DatabaseReader(uri, db, startOffset, batchSize, messages);
+            } else {
+                reader = new DatabaseReader(host, port, db, startOffset, batchSize, messages);
             }
             final Thread thread = new Thread(reader);
-			thread.start();
-			threads.add(thread);
+            thread.start();
+            threads.add(thread);
         }
     }
-	
 
-    private String getStartOffset(String db){
-    	String start;
+
+    private String getStartOffset(String db) {
+        String startOffset;
         final List<Map<String, String>> partitions = new ArrayList<>();
         final Map<String, String> partition = Collections.singletonMap("mongodb", db);
         partitions.add(partition);
-     
+
         // get the last message that was read
         Map<String, Object> dbOffset = this.start.get(Collections.singletonMap("mongodb", db));
-        if (dbOffset == null || dbOffset.isEmpty()){
-            start = "0";
+        if (dbOffset == null || dbOffset.isEmpty()) {
+            startOffset = "0";
+        } else {
+            startOffset = (String) this.start.get(Collections.singletonMap("mongodb", db)).get(db);
         }
-        else{
-            start = (String) this.start.get(Collections.singletonMap("mongodb", db)).get(db);
-        }
-        return start;
-    }
-    
-	public void stop(){
-    	for(Thread thread : threads){
-    		thread.interrupt();
-    	}
-    }
-    
-	public boolean isEmpty(){
-    	return messages.isEmpty();
+        return startOffset;
     }
 
-	public Document pool() {
-		return messages.poll();
-	}
+    public void stop() {
+        for (Thread thread : threads) {
+            thread.interrupt();
+        }
+    }
+
+    public boolean isEmpty() {
+        return messages.isEmpty();
+    }
+
+    public Document pool() {
+        return messages.poll();
+    }
 }

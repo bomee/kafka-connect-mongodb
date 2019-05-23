@@ -1,18 +1,10 @@
 package org.apache.kafka.connect.mongodb;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.kafka.common.errors.InterruptException;
 import org.apache.kafka.connect.data.Schema;
-import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
-import org.apache.kafka.connect.mongodb.converter.StringStructConverter;
+import org.apache.kafka.connect.mongodb.converter.JsonStructConverter;
 import org.apache.kafka.connect.mongodb.converter.StructConverter;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -21,13 +13,15 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+
 /**
  * MongodbSourceTask is a Task that reads mutations from a mongodb for storage in Kafka.
  *
  * @author Andrea Patelli
  */
 public class MongodbSourceTask extends SourceTask {
-    private final static Logger log = LoggerFactory.getLogger(MongodbSourceTask.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MongodbSourceTask.class);
 
     private String uri;
     private String host;
@@ -57,14 +51,14 @@ public class MongodbSourceTask extends SourceTask {
      */
     @Override
     public void start(Map<String, String> map) {
-    	if(map.containsKey(MongodbSourceConfig.PORT)){
-	        try {
-	            port = Integer.parseInt(map.get(MongodbSourceConfig.PORT));
-	        } catch (Exception e) {
-	            throw new ConnectException(MongodbSourceConfig.PORT + " config should be an Integer");
-	        }
-    	}
-    	
+        if (map.containsKey(MongodbSourceConfig.PORT)) {
+            try {
+                port = Integer.parseInt(map.get(MongodbSourceConfig.PORT));
+            } catch (Exception e) {
+                throw new ConnectException(MongodbSourceConfig.PORT + " config should be an Integer");
+            }
+        }
+
         try {
             batchSize = Integer.parseInt(map.get(MongodbSourceConfig.BATCH_SIZE));
         } catch (Exception e) {
@@ -75,47 +69,38 @@ public class MongodbSourceTask extends SourceTask {
         topicPrefix = map.get(MongodbSourceConfig.TOPIC_PREFIX);
         uri = map.get(MongodbSourceConfig.URI);
         host = map.get(MongodbSourceConfig.HOST);
-        
-        try{
+
+        try {
             String structConverterClass = map.get(MongodbSourceConfig.CONVERTER_CLASS);
-            if(structConverterClass == null || structConverterClass.isEmpty()){
-            	structConverterClass = StringStructConverter.class.getName();
+            if (structConverterClass == null || structConverterClass.isEmpty()) {
+                structConverterClass = JsonStructConverter.class.getName();
             }
             structConverter = (StructConverter) Class.forName(structConverterClass).newInstance();
+        } catch (Exception e) {
+            throw new ConnectException(MongodbSourceConfig.CONVERTER_CLASS
+                    + " config should be a class of type StructConverter");
         }
-        catch(Exception e){
-        	throw new ConnectException(MongodbSourceConfig.CONVERTER_CLASS + " config should be a class of type StructConverter");
-        }
-        
+
         databases = Arrays.asList(map.get(MongodbSourceConfig.DATABASES).split(","));
 
-        log.trace("Creating schema");
+        LOGGER.trace("Creating schema");
         if (schemas == null) {
             schemas = new HashMap<>();
         }
 
         for (String db : databases) {
             db = db.replaceAll("[\\s.]", "_");
-            if (schemas.get(db) == null)
-                schemas.put(db,
-                        SchemaBuilder
-                                .struct()
-                                .name(schemaName.concat("_").concat(db))
-                                .field("timestamp", Schema.OPTIONAL_INT32_SCHEMA)
-                                .field("order", Schema.OPTIONAL_INT32_SCHEMA)
-                                .field("operation", Schema.OPTIONAL_STRING_SCHEMA)
-                                .field("database", Schema.OPTIONAL_STRING_SCHEMA)
-                                .field("object", Schema.OPTIONAL_STRING_SCHEMA)
-                                .build());
+            if (schemas.get(db) == null) {
+                schemas.put(db, structConverter.createSchema(schemaName.concat("_").concat(db)));
+            }
         }
 
         loadOffsets();
-        
-        if(uri != null){
-        	reader = new MongodbReader(uri, databases, batchSize, offsets);
-        }
-        else{
-        	reader = new MongodbReader(host, port, databases, batchSize, offsets);
+
+        if (uri != null) {
+            reader = new MongodbReader(uri, databases, batchSize, offsets);
+        } else {
+            reader = new MongodbReader(host, port, databases, batchSize, offsets);
         }
         reader.run();
     }
@@ -130,13 +115,18 @@ public class MongodbSourceTask extends SourceTask {
     public List<SourceRecord> poll() throws InterruptException {
         List<SourceRecord> records = new ArrayList<>();
         while (!reader.isEmpty()) {
-        	Document message = reader.pool();
+            Document message = reader.pool();
             Struct messageStruct = getStruct(message);
             String topic = getTopic(message);
-            String db = getDB(message);
+            String db = getNamespace(message);
             String timestamp = getTimestamp(message);
-            records.add(new SourceRecord(Collections.singletonMap("mongodb", db), Collections.singletonMap(db, timestamp), topic, messageStruct.schema(), messageStruct));
-            log.trace(message.toString());
+            records.add(new SourceRecord(
+                    Collections.singletonMap("mongodb", db),
+                    Collections.singletonMap(db, timestamp),
+                    topic,
+                    messageStruct.schema(),
+                    messageStruct));
+            LOGGER.trace(message.toString());
         }
 
 
@@ -148,9 +138,9 @@ public class MongodbSourceTask extends SourceTask {
      */
     @Override
     public void stop() {
-    	if(reader != null){
-    		reader.stop();
-    	}
+        if (reader != null) {
+            reader.stop();
+        }
     }
 
     /**
@@ -177,7 +167,7 @@ public class MongodbSourceTask extends SourceTask {
      * @param message from which retrieve the database
      * @return the database name, as a String
      */
-    private String getDB(Document message) {
+    private String getNamespace(Document message) {
         return (String) message.get("ns");
     }
 
@@ -203,8 +193,8 @@ public class MongodbSourceTask extends SourceTask {
      * @return message formatted as a Struct
      */
     private Struct getStruct(Document message) {
-    	final Schema schema = schemas.get(getDB(message).replaceAll("[\\s.]", "_"));
-    	return structConverter.toStruct(message, schema);
+        final Schema schema = schemas.get(getNamespace(message).replaceAll("\\.\\w+", ""));
+        return structConverter.toStruct(message, schema);
     }
 
     /**

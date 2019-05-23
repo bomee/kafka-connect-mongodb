@@ -12,13 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import static org.apache.kafka.connect.mongodb.MongodbSinkConfig.HOST;
-import static org.apache.kafka.connect.mongodb.MongodbSinkConfig.PORT;
-import static org.apache.kafka.connect.mongodb.MongodbSinkConfig.BULK_SIZE;
-import static org.apache.kafka.connect.mongodb.MongodbSinkConfig.TOPICS;
-import static org.apache.kafka.connect.mongodb.MongodbSinkConfig.URI;
-import static org.apache.kafka.connect.mongodb.MongodbSinkConfig.DATABASE;
-import static org.apache.kafka.connect.mongodb.MongodbSinkConfig.COLLECTIONS;
+
+import static org.apache.kafka.connect.mongodb.MongodbSinkConfig.*;
 
 /**
  * MongodbSinkConnector implement the Connector interface to send Kafka
@@ -27,7 +22,7 @@ import static org.apache.kafka.connect.mongodb.MongodbSinkConfig.COLLECTIONS;
  * @author Andrea Patelli
  */
 public class MongodbSinkConnector extends SinkConnector {
-    private final static Logger log = LoggerFactory.getLogger(MongodbSinkConnector.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MongodbSinkConnector.class);
 
     private String uri;
     private String port;
@@ -55,23 +50,24 @@ public class MongodbSinkConnector extends SinkConnector {
      */
     @Override
     public void start(Map<String, String> map) {
-        log.trace("Parsing configuration");
+        LOGGER.trace("Parsing configuration");
 
         uri = map.get(URI);
-        if (uri == null || uri.isEmpty()){
+        if (uri == null || uri.isEmpty()) {
             host = map.get(HOST);
-            if (host == null || host.isEmpty()){
+            if (host == null || host.isEmpty()) {
                 throw new ConnectException("Missing " + HOST + " config");
             }
-        	
-	        port = map.get(PORT);
-	        if (port == null || port.isEmpty()){
-	            throw new ConnectException("Missing " + PORT + " config");
-	        }
+
+            port = map.get(PORT);
+            if (port == null || port.isEmpty()) {
+                throw new ConnectException("Missing " + PORT + " config");
+            }
         }
         bulkSize = map.get(BULK_SIZE);
-        if (bulkSize == null || bulkSize.isEmpty())
+        if (bulkSize == null || bulkSize.isEmpty()) {
             throw new ConnectException("Missing " + BULK_SIZE + " config");
+        }
 
         database = map.get(DATABASE);
         collections = map.get(COLLECTIONS);
@@ -81,7 +77,7 @@ public class MongodbSinkConnector extends SinkConnector {
             throw new ConnectException("The number of topics should be the same as the number of collections");
         }
 
-        LogUtils.dumpConfiguration(map, log);
+        LogUtils.dumpConfiguration(map, LOGGER);
     }
 
     /**
@@ -113,11 +109,11 @@ public class MongodbSinkConnector extends SinkConnector {
         for (int i = 0; i < numGroups; i++) {
             Map<String, String> config = new HashMap<>();
             config.put(URI, uri);
-            if(host!=null){
+            if (host != null) {
                 config.put(HOST, host);
             }
-            if(port!=null){
-            	config.put(PORT, port);
+            if (port != null) {
+                config.put(PORT, port);
             }
             config.put(BULK_SIZE, bulkSize);
             config.put(DATABASE, database);
@@ -137,7 +133,7 @@ public class MongodbSinkConnector extends SinkConnector {
     }
 
     @Override
-    public ConfigDef config () {
+    public ConfigDef config() {
         return null;
     }
 }

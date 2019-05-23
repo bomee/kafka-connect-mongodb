@@ -6,10 +6,12 @@ import org.bson.Document;
 
 /**
  * Converter a document in a Struct.
- * 
+ *
  * @author André Ignacio
  */
 public interface StructConverter {
 
-	Struct toStruct(Document document, Schema schema);
+    Struct toStruct(Document document, Schema schema);
+
+    Schema createSchema(String name);
 }
